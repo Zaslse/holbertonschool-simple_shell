@@ -16,8 +16,10 @@ extern char **environ;
 int main(int argc, char **argv)
 {
 	char *line = NULL;
-	char *args[2];
+	char **args;
+	char *token;
 	size_t len = 0;
+	int index;
 	pid_t pid;
 
 	(void)argc;
@@ -30,18 +32,39 @@ int main(int argc, char **argv)
 			free(line);
 			return (0);
 		}
-		line[strcspn(line, "\n")] = '\0';
-		if (line[0] == '\0')
+
+		args = malloc(sizeof(char *) * len);
+		if (args == NULL)
+		{
+			free(line);
+			return (1);
+		}
+
+		index = 0;
+		token = strtok(line, " \n");
+		while (token != NULL)
+		{
+			args[index++] = token;
+			token = strtok(NULL, " \n");
+		}
+		args[index] = NULL;
+
+		if (args[0] == NULL)
+		{
+			free(args);
 			continue;
+		}
+
 		pid = fork();
 		if (pid == 0)
 		{
-			args[0] = line;
-			args[1] = NULL;
-			execve(line, args, environ);
+			execve(args[0], args, environ);
 			perror(argv[0]);
+			free(args);
+			free(line);
 			_exit(1);
 		}
 		wait(NULL);
+		free(args);
 	}
 }
