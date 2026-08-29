@@ -4,11 +4,13 @@
  * execute_cmd - Executes the command using fork and execve
  * @argv: Array of parsed arguments
  * @line: The original input string
+ *
+ * Return: The exit status of the executed command
  */
-void execute_cmd(char **argv, char *line)
+int execute_cmd(char **argv, char *line)
 {
 	pid_t child_pid;
-	int status;
+	int status = 0;
 
 	child_pid = fork();
 	if (child_pid == 0)
@@ -17,13 +19,16 @@ void execute_cmd(char **argv, char *line)
 		{
 			perror("./hsh");
 			free(line);
-			exit(1);
+			exit(127);
 		}
 	}
 	else
 	{
 		wait(&status);
+		if (WIFEXITED(status))
+			return (WEXITSTATUS(status));
 	}
+	return (0);
 }
 
 /**
@@ -35,7 +40,7 @@ int main(void)
 {
 	char *line = NULL, *token, *argv[100];
 	size_t len = 0;
-	int i;
+	int i, status = 0;
 
 	while (1)
 	{
@@ -46,7 +51,7 @@ int main(void)
 			free(line);
 			if (isatty(STDIN_FILENO))
 				printf("\n");
-			exit(0);
+			exit(status);
 		}
 		token = strtok(line, " \t\n");
 		if (token == NULL)
@@ -54,7 +59,7 @@ int main(void)
 		if (strcmp(token, "exit") == 0)
 		{
 			free(line);
-			exit(0);
+			exit(status);
 		}
 		for (i = 0; token != NULL; i++)
 		{
@@ -62,7 +67,7 @@ int main(void)
 			token = strtok(NULL, " \t\n");
 		}
 		argv[i] = NULL;
-		execute_cmd(argv, line);
+		status = execute_cmd(argv, line);
 	}
-	return (0);
+	return (status);
 }
