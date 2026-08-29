@@ -32,6 +32,20 @@ int execute_cmd(char **argv, char *line)
 }
 
 /**
+ * print_env - Prints the current environment variables
+ */
+void print_env(void)
+{
+	int i = 0;
+
+	while (environ[i] != NULL)
+	{
+		printf("%s\n", environ[i]);
+		i++;
+	}
+}
+
+/**
  * main - Simple shell entry point
  *
  * Return: Always 0 (Success)
@@ -60,6 +74,11 @@ int main(void)
 		{
 			free(line);
 			exit(status);
+		}
+		if (strcmp(token, "env") == 0)
+		{
+			print_env();
+			continue;
 		}
 		for (i = 0; token != NULL; i++)
 		{
