@@ -48,7 +48,7 @@ int main(void)
 				printf("\n");
 			exit(0);
 		}
-		token = strtok(line, " \n");
+		token = strtok(line, " \t\n");
 		if (token == NULL)
 			continue;
 		if (strcmp(token, "exit") == 0)
@@ -59,7 +59,7 @@ int main(void)
 		for (i = 0; token != NULL; i++)
 		{
 			argv[i] = token;
-			token = strtok(NULL, " \n");
+			token = strtok(NULL, " \t\n");
 		}
 		argv[i] = NULL;
 		execute_cmd(argv, line);
