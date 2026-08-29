@@ -11,6 +11,6 @@
 
 extern char **environ;
 
-void execute_cmd(char **argv, char *line);
+int execute_cmd(char **argv, char *line);
 
 #endif /* SHELL_H */
