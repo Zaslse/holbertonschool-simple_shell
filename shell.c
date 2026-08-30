@@ -72,6 +72,7 @@ int handle_command(char *input, char *line, int status)
 
 	if (strcmp(token, "exit") == 0)
 	{
+		free_aliases();
 		free(line);
 		exit(status);
 	}
@@ -110,6 +111,7 @@ int main(void)
 
 		if (getline(&line, &len, stdin) == -1)
 		{
+			free_aliases();
 			free(line);
 			if (isatty(STDIN_FILENO))
 				printf("\n");

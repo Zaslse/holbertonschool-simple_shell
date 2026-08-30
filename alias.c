@@ -141,3 +141,17 @@ int handle_alias(char *input)
 
 	return (0);
 }
+
+/**
+ * free_aliases - Frees all aliases
+ */
+void free_aliases(void)
+{
+	int i;
+
+	for (i = 0; i < alias_count; i++)
+	{
+		free(alias_names[i]);
+		free(alias_values[i]);
+	}
+}
