@@ -193,31 +193,54 @@ int handle_command(char *input, char *line, int status)
 
 /**
  * main - Simple shell entry point
+ * @argc: Argument count
+ * @argv: Argument vector
  *
- * Return: Always 0 (Success)
+ * Return: Shell exit status
  */
-int main(void)
+int main(int argc, char **argv)
 {
 	char *line = NULL, *start, *p;
 	size_t len = 0;
-	int status = 0, run = 1;
+	int status = 0, run = 1, fd = STDIN_FILENO;
+	int file_mode = 0, read_status;
 	char operator = ';';
 
 	history_init();
 
+	if (argc > 1)
+	{
+		fd = open(argv[1], O_RDONLY);
+		if (fd == -1)
+		{
+			perror(argv[0]);
+			history_free();
+			return (127);
+		}
+		file_mode = 1;
+	}
+
 	while (1)
 	{
-		if (isatty(STDIN_FILENO))
+		if (!file_mode && isatty(STDIN_FILENO))
 			printf("($) ");
 
-		if (getline(&line, &len, stdin) == -1)
+		if (file_mode)
+			read_status = read_file_line(fd, &line, &len);
+		else
+			read_status = (getline(&line, &len, stdin) == -1) ? 0 : 1;
+
+		if (read_status <= 0)
 		{
+			if (file_mode)
+				close(fd);
+
 			history_save();
 			history_free();
 			free_aliases();
 			free(line);
 
-			if (isatty(STDIN_FILENO))
+			if (!file_mode && isatty(STDIN_FILENO))
 				printf("\n");
 
 			exit(status);

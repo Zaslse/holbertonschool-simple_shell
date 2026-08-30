@@ -26,5 +26,6 @@ void history_add(char *line);
 void history_print(void);
 void history_save(void);
 void history_free(void);
+int read_file_line(int fd, char **line, size_t *size);
 
 #endif /* SHELL_H */
