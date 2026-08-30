@@ -92,8 +92,8 @@ int main(void)
 {
 	char *line = NULL, *start, *p;
 	size_t len = 0;
-	int status = 0;
-	char end;
+	int status = 0, run = 1;
+	char operator = ';';
 
 	while (1)
 	{
@@ -113,15 +113,30 @@ int main(void)
 
 		while (1)
 		{
-			if (*p == ';' || *p == '\0')
+			if (*p == ';' ||
+			    (*p == '&' && *(p + 1) == '&') ||
+			    (*p == '|' && *(p + 1) == '|') ||
+			    *p == '\0')
 			{
-				end = *p;
-				*p = '\0';
-				status = handle_command(start, line, status);
+				char next = *p;
 
-				if (end == '\0')
+				if (*p != '\0')
+					*p = '\0';
+
+				run = (operator == ';' ||
+				       (operator == '&' && status == 0) ||
+				       (operator == '|' && status != 0));
+
+				if (run)
+					status = handle_command(start, line, status);
+
+				if (next == '\0')
 					break;
 
+				if (next == '&' || next == '|')
+				p++;
+
+				operator = next;
 				start = p + 1;
 			}
 			p++;
