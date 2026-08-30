@@ -1,6 +1,25 @@
 #include "shell.h"
 
 /**
+ * variable_name_length - Gets variable name length
+ * @name: Variable name
+ *
+ * Return: Variable name length
+ */
+static int variable_name_length(char *name)
+{
+	int length = 0;
+
+	while ((name[length] >= 'a' && name[length] <= 'z') ||
+	       (name[length] >= 'A' && name[length] <= 'Z') ||
+	       (name[length] >= '0' && name[length] <= '9') ||
+	       name[length] == '_')
+		length++;
+
+	return (length);
+}
+
+/**
  * get_env_value - Gets an environment variable value
  * @name: Variable name
  * @length: Variable name length
@@ -17,37 +36,37 @@ static char *get_env_value(char *name, int length)
 		    environ[i][length] == '=')
 			return (environ[i] + length + 1);
 	}
+
 	return ("");
 }
 
 /**
- * variable_length - Gets replacement length
- * @p: Variable position
+ * replacement_length - Gets variable replacement length
+ * @p: Position after dollar sign
  * @status: Last command status
  *
  * Return: Replacement length
  */
-static int variable_length(char *p, int status)
+static int replacement_length(char *p, int status)
 {
 	char number[32], *value;
-	int length = 0;
+	int length;
 
 	if (*p == '?')
 	{
 		sprintf(number, "%d", status);
 		return (strlen(number));
 	}
+
 	if (*p == '$')
 	{
 		sprintf(number, "%d", getpid());
 		return (strlen(number));
 	}
 
-	while ((p[length] >= 'a' && p[length] <= 'z') ||
-	       (p[length] >= 'A' && p[length] <= 'Z') ||
-	       (p[length] >= '0' && p[length] <= '9') ||
-	       p[length] == '_')
-		length++;
+	length = variable_name_length(p);
+	if (length == 0)
+		return (1);
 
 	value = get_env_value(p, length);
 	return (strlen(value));
@@ -67,25 +86,28 @@ char *expand_variables(char *input, int status)
 
 	for (i = 0; input[i] != '\0'; i++)
 	{
-		if (input[i] == '$' && input[i + 1] != '\0')
+		if (input[i] != '$')
 		{
-			size += variable_length(input + i + 1, status);
-			i++;
+			size++;
+			continue;
+		}
 
-			if (input[i] != '?' && input[i] != '$')
-			{
-				while ((input[i + 1] >= 'a' &&
-					input[i + 1] <= 'z') ||
-				       (input[i + 1] >= 'A' &&
-					input[i + 1] <= 'Z') ||
-				       (input[i + 1] >= '0' &&
-					input[i + 1] <= '9') ||
-				       input[i + 1] == '_')
-					i++;
-			}
+		if (input[i + 1] == '?' || input[i + 1] == '$')
+		{
+			size += replacement_length(input + i + 1, status);
+			i++;
 		}
 		else
-			size++;
+		{
+			length = variable_name_length(input + i + 1);
+			if (length == 0)
+				size++;
+			else
+			{
+				size += replacement_length(input + i + 1, status);
+				i += length;
+			}
+		}
 	}
 
 	result = malloc(size);
@@ -94,38 +116,40 @@ char *expand_variables(char *input, int status)
 
 	for (i = 0; input[i] != '\0'; i++)
 	{
-		if (input[i] != '$' || input[i + 1] == '\0')
+		if (input[i] != '$')
 		{
 			result[j++] = input[i];
 			continue;
 		}
 
-		i++;
-		if (input[i] == '?')
+		if (input[i + 1] == '?')
+		{
 			sprintf(number, "%d", status);
-		else if (input[i] == '$')
+			strcpy(result + j, number);
+			j += strlen(number);
+			i++;
+		}
+		else if (input[i + 1] == '$')
+		{
 			sprintf(number, "%d", getpid());
+			strcpy(result + j, number);
+			j += strlen(number);
+			i++;
+		}
 		else
 		{
-			length = 0;
-			while ((input[i + length] >= 'a' &&
-				input[i + length] <= 'z') ||
-			       (input[i + length] >= 'A' &&
-				input[i + length] <= 'Z') ||
-			       (input[i + length] >= '0' &&
-				input[i + length] <= '9') ||
-			       input[i + length] == '_')
-				length++;
+			length = variable_name_length(input + i + 1);
+			if (length == 0)
+			{
+				result[j++] = '$';
+				continue;
+			}
 
-			value = get_env_value(input + i, length);
+			value = get_env_value(input + i + 1, length);
 			strcpy(result + j, value);
 			j += strlen(value);
-			i += length - 1;
-			continue;
+			i += length;
 		}
-
-		strcpy(result + j, number);
-		j += strlen(number);
 	}
 
 	result[j] = '\0';
