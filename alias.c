@@ -5,20 +5,26 @@ static char *alias_values[100];
 static int alias_count;
 
 /**
- * alias_index - Finds an alias index
+ * find_alias - Finds an alias
  * @name: Alias name
+ * @index: Pointer to alias index
  *
- * Return: Alias index or -1
+ * Return: Alias value or NULL
  */
-static int alias_index(char *name)
+char *find_alias(char *name, int *index)
 {
 	int i;
 
 	for (i = 0; i < alias_count; i++)
+	{
 		if (strcmp(alias_names[i], name) == 0)
-			return (i);
-
-	return (-1);
+		{
+			if (index != NULL)
+				*index = i;
+			return (alias_values[i]);
+		}
+	}
+	return (NULL);
 }
 
 /**
@@ -28,9 +34,9 @@ static int alias_index(char *name)
  */
 static void set_alias(char *name, char *value)
 {
-	int i = alias_index(name);
+	int i;
 
-	if (i >= 0)
+	if (find_alias(name, &i) != NULL)
 	{
 		free(alias_values[i]);
 		alias_values[i] = strdup(value);
@@ -43,18 +49,6 @@ static void set_alias(char *name, char *value)
 		alias_values[alias_count] = strdup(value);
 		alias_count++;
 	}
-}
-
-/**
- * show_alias - Prints an alias
- * @name: Alias name
- */
-static void show_alias(char *name)
-{
-	int i = alias_index(name);
-
-	if (i >= 0)
-		printf("%s='%s'\n", alias_names[i], alias_values[i]);
 }
 
 /**
@@ -136,9 +130,12 @@ int handle_alias(char *input)
 		if (value != NULL)
 			set_alias(name, value);
 		else
-			show_alias(name);
+		{
+			value = find_alias(name, NULL);
+			if (value != NULL)
+				printf("%s='%s'\n", name, value);
+		}
 	}
-
 	return (0);
 }
 

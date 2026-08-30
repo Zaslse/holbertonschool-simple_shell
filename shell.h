@@ -14,6 +14,7 @@ extern char **environ;
 int execute_cmd(char **argv, char *line);
 void print_env(void);
 int handle_alias(char *input);
+char *find_alias(char *name, int *index);
 void free_aliases(void);
 
 #endif /* SHELL_H */

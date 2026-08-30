@@ -18,6 +18,7 @@ int execute_cmd(char **argv, char *line)
 		if (execve(argv[0], argv, environ) == -1)
 		{
 			perror("./hsh");
+			free_aliases();
 			free(line);
 			exit(127);
 		}
@@ -46,6 +47,47 @@ void print_env(void)
 }
 
 /**
+ * expand_alias - Expands aliases in a command
+ * @input: Command input
+ *
+ * Return: Expanded command
+ */
+char *expand_alias(char *input)
+{
+	char *command, *p, *value, *new;
+	int count = 0;
+
+	command = strdup(input);
+	if (command == NULL)
+		return (NULL);
+
+	while (count++ < 100)
+	{
+		p = command;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		while (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
+			p++;
+
+		if (*p != '\0')
+			*p = '\0';
+
+		value = find_alias(command, NULL);
+		if (value == NULL)
+			break;
+
+		new = malloc(strlen(value) + strlen(p + 1) + 2);
+		if (new == NULL)
+			break;
+
+		sprintf(new, "%s %s", value, p + 1);
+		free(command);
+		command = new;
+	}
+	return (command);
+}
+
+/**
  * handle_command - Parses and executes one command
  * @input: Command to parse
  * @line: Original input line
@@ -55,8 +97,8 @@ void print_env(void)
  */
 int handle_command(char *input, char *line, int status)
 {
-	char *token, *argv[100], *p = input;
-	int i;
+	char *token, *argv[100], *p = input, *command;
+	int i, result;
 
 	while (*p == ' ' || *p == '\t')
 		p++;
@@ -66,12 +108,20 @@ int handle_command(char *input, char *line, int status)
 	     p[5] == ' ' || p[5] == '\t'))
 		return (handle_alias(p));
 
-	token = strtok(input, " \t\n");
-	if (token == NULL)
+	command = expand_alias(input);
+	if (command == NULL)
 		return (status);
+
+	token = strtok(command, " \t\n");
+	if (token == NULL)
+	{
+		free(command);
+		return (status);
+	}
 
 	if (strcmp(token, "exit") == 0)
 	{
+		free(command);
 		free_aliases();
 		free(line);
 		exit(status);
@@ -79,6 +129,7 @@ int handle_command(char *input, char *line, int status)
 	if (strcmp(token, "env") == 0)
 	{
 		print_env();
+		free(command);
 		return (status);
 	}
 
@@ -88,8 +139,9 @@ int handle_command(char *input, char *line, int status)
 		token = strtok(NULL, " \t\n");
 	}
 	argv[i] = NULL;
-
-	return (execute_cmd(argv, line));
+	result = execute_cmd(argv, line);
+	free(command);
+	return (result);
 }
 
 /**
