@@ -12,7 +12,7 @@
 
 extern char **environ;
 
-int execute_cmd(char **argv, char *line, char *command);
+int execute_cmd(char **argv, char *line, char *command, int count);
 void print_env(void);
 int handle_alias(char *input);
 char *find_alias(char *name, int *index);

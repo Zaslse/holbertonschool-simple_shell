@@ -5,10 +5,11 @@
  * @argv: Array of parsed arguments
  * @line: The original input string
  * @command: Parsed command string
+ * @count: Command line number
  *
  * Return: The exit status of the executed command
  */
-int execute_cmd(char **argv, char *line, char *command)
+int execute_cmd(char **argv, char *line, char *command, int count)
 {
 	pid_t child_pid;
 	int status = 0;
@@ -17,7 +18,8 @@ int execute_cmd(char **argv, char *line, char *command)
 	path = find_command_path(argv[0]);
 	if (path == NULL)
 	{
-		fprintf(stderr, "./hsh: No such file or directory\n");
+		fprintf(stderr, "./hsh: %d: %s: not found\n",
+			count, argv[0]);
 		return (127);
 	}
 
@@ -112,10 +114,11 @@ char *expand_alias(char *input)
  * @input: Command to parse
  * @line: Original input line
  * @status: Current shell status
+ * @count: Command line number
  *
  * Return: Command status
  */
-int handle_command(char *input, char *line, int status)
+int handle_command(char *input, char *line, int status, int count)
 {
 	char *token, *argv[100], *p = input, *command;
 	int i, result;
@@ -185,7 +188,7 @@ int handle_command(char *input, char *line, int status)
 	}
 	argv[i] = NULL;
 
-	result = execute_cmd(argv, line, command);
+	result = execute_cmd(argv, line, command, count);
 	free(command);
 
 	return (result);
@@ -203,7 +206,7 @@ int main(int argc, char **argv)
 	char *line = NULL, *start, *p;
 	size_t len = 0;
 	int status = 0, run = 1, fd = STDIN_FILENO;
-	int file_mode = 0, read_status;
+	int file_mode = 0, read_status, count = 0;
 	char operator = ';';
 
 	history_init();
@@ -247,6 +250,7 @@ int main(int argc, char **argv)
 			exit(status);
 		}
 
+		count++;
 		history_add(line);
 		remove_comment(line);
 
@@ -270,7 +274,8 @@ int main(int argc, char **argv)
 				       (operator == '|' && status != 0));
 
 				if (run)
-					status = handle_command(start, line, status);
+					status = handle_command(start, line,
+								status, count);
 
 				if (next == '\0')
 					break;
