@@ -201,6 +201,8 @@ int main(void)
 			exit(status);
 		}
 
+		remove_comment(line);
+
 		start = line;
 		p = line;
 

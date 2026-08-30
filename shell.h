@@ -18,5 +18,6 @@ char *find_alias(char *name, int *index);
 void free_aliases(void);
 char *expand_variables(char *input, int status);
 char *find_command_path(char *command);
+void remove_comment(char *line);
 
 #endif /* SHELL_H */
