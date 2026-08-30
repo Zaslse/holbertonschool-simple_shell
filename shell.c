@@ -55,8 +55,16 @@ void print_env(void)
  */
 int handle_command(char *input, char *line, int status)
 {
-	char *token, *argv[100];
+	char *token, *argv[100], *p = input;
 	int i;
+
+	while (*p == ' ' || *p == '\t')
+		p++;
+
+	if (strncmp(p, "alias", 5) == 0 &&
+	    (p[5] == '\0' || p[5] == '\n' ||
+	     p[5] == ' ' || p[5] == '\t'))
+		return (handle_alias(p));
 
 	token = strtok(input, " \t\n");
 	if (token == NULL)
@@ -134,7 +142,7 @@ int main(void)
 					break;
 
 				if (next == '&' || next == '|')
-				p++;
+					p++;
 
 				operator = next;
 				start = p + 1;
