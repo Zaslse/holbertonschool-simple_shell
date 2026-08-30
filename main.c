@@ -1,76 +1,58 @@
 #include "shell.h"
 
 /**
- * split_line - Splits line into tokens
- * @line: Line to split
- * Return: Array of tokens
- */
-char **split_line(char *line)
-{
-	int i = 0;
-	char **tokens = malloc(1024 * sizeof(char *));
-	char *token;
-
-	if (!tokens)
-		return (NULL);
-	token = _strtok(line, " \t\r\n\a");
-	while (token != NULL)
-	{
-		tokens[i++] = token;
-		token = _strtok(NULL, " \t\r\n\a");
-	}
-	tokens[i] = NULL;
-	return (tokens);
-}
-
-/**
- * main - Entry point
- * @ac: Arg count
- * @av: Arg vector
- * Return: Status
+ * main - Entry point for simple shell
+ * @ac: Argument count
+ * @av: Argument vector
+ * Return: Exit status
  */
 int main(int ac, char **av)
 {
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t read;
-	char **args;
 	info_t info;
-	int interactive = isatty(STDIN_FILENO), ret;
+	size_t len = 0;
+	ssize_t nread;
+	int interactive;
 
 	(void)ac;
 	info.name = av[0];
-	info.line_count = 0;
+	info.line = NULL;
+	info.args = NULL;
+	info.env = NULL;
 	info.status = 0;
-	init_env(&info);
+	info.count = 0;
+
+	if (init_env(&info) == -1)
+		return (1);
+
+	interactive = isatty(STDIN_FILENO);
 
 	while (1)
 	{
 		if (interactive)
 			write(STDOUT_FILENO, "($) ", 4);
-		read = _getline(&line, &len, STDIN_FILENO);
-		if (read == -1)
+		nread = _getline(&(info.line), &len, STDIN_FILENO);
+		if (nread == -1)
 		{
 			if (interactive)
 				write(STDOUT_FILENO, "\n", 1);
 			break;
 		}
-		info.line_count++;
-		args = split_line(line);
-		if (args && args[0])
+		info.count++;
+		handle_comments(info.line);
+		info.args = tokenize(info.line);
+		if (info.args != NULL && info.args[0] != NULL)
 		{
-			ret = check_builtin(&info, args);
-			if (ret == -1)
-			{
-				free(args);
-				break;
-			}
-			if (ret == 0)
-				execute(&info, args);
+			if (!check_builtin(&info))
+				execute(&info);
 		}
-		free(args);
+		if (info.args != NULL)
+		{
+			free_array(info.args);
+			info.args = NULL;
+		}
 	}
-	free(line);
+	if (info.line != NULL)
+		free(info.line);
 	free_env(&info);
 	return (info.status);
 }

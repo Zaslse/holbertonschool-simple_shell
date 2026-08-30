@@ -1,84 +1,66 @@
 #include "shell.h"
 
 /**
- * find_path - Finds executable path
- * @info: Shell info
- * @cmd: Command
- * Return: Full path or NULL
+ * handle_comments - Truncates command line at first # preceded by space
+ * @line: Command line
  */
-char *find_path(info_t *info, char *cmd)
+void handle_comments(char *line)
 {
-	char *path = _getenv(info, "PATH");
-	char *path_copy, *dir, *full_path;
-	struct stat st;
+	int i;
 
-	if (!path || _strchr(cmd, '/'))
+	if (line == NULL)
+		return;
+	for (i = 0; line[i] != '\0'; i++)
 	{
-		if (stat(cmd, &st) == 0)
-			return (_strdup(cmd));
-		return (NULL);
-	}
-
-	path_copy = _strdup(path);
-	dir = _strtok(path_copy, ":");
-	while (dir)
-	{
-		full_path = malloc(_strlen(dir) + _strlen(cmd) + 2);
-		_strcpy(full_path, dir);
-		_strcat(full_path, "/");
-		_strcat(full_path, cmd);
-
-		if (stat(full_path, &st) == 0)
+		if (line[i] == '#' && (i == 0 || line[i - 1] == ' ' || line[i - 1] == '\t'))
 		{
-			free(path_copy);
-			return (full_path);
+			line[i] = '\0';
+			break;
 		}
-		free(full_path);
-		dir = _strtok(NULL, ":");
 	}
-	free(path_copy);
-	return (NULL);
 }
 
 /**
- * execute - Executes command
- * @info: Shell info
- * @args: Arguments
- * Return: 1
+ * execute - Forks and executes external program
+ * @info: Shell info struct
+ * Return: Exit status
  */
-int execute(info_t *info, char **args)
+int execute(info_t *info)
 {
 	char *cmd_path;
-	pid_t pid;
+	pid_t child_pid;
 	int status;
 
-	cmd_path = find_path(info, args[0]);
-	if (!cmd_path)
+	cmd_path = find_path(info, info->args[0]);
+	if (cmd_path == NULL)
 	{
-		fprintf(stderr, "%s: %d: %s: not found\n",
-			info->name, info->line_count, args[0]);
+		print_error(info, "not found");
 		info->status = 127;
-		return (1);
+		return (info->status);
 	}
-
-	pid = fork();
-	if (pid == 0)
+	child_pid = fork();
+	if (child_pid == -1)
 	{
-		if (execve(cmd_path, args, info->env) == -1)
+		perror(info->name);
+		free(cmd_path);
+		info->status = 1;
+		return (info->status);
+	}
+	if (child_pid == 0)
+	{
+		if (execve(cmd_path, info->args, info->env) == -1)
 		{
 			perror(info->name);
+			free(cmd_path);
 			exit(126);
 		}
 	}
-	else if (pid < 0)
-		perror(info->name);
 	else
 	{
-		waitpid(pid, &status, 0);
+		waitpid(child_pid, &status, 0);
 		if (WIFEXITED(status))
 			info->status = WEXITSTATUS(status);
 	}
-
 	free(cmd_path);
-	return (1);
+	return (info->status);
 }

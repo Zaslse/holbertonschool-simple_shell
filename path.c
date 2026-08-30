@@ -1,68 +1,52 @@
 #include "shell.h"
 
 /**
- * get_path - Gets the PATH environment variable
- *
- * Return: PATH value or NULL
+ * find_path - Resolves command full path from PATH variable
+ * @info: Shell info struct
+ * @cmd: Command name
+ * Return: Allocated full path or NULL
  */
-static char *get_path(void)
+char *find_path(info_t *info, char *cmd)
 {
-	int i;
+	char *path_val, *path_copy, *token, *full;
+	struct stat st;
+	int len;
 
-	for (i = 0; environ[i] != NULL; i++)
+	if (cmd == NULL)
+		return (NULL);
+	if (_strchr(cmd, '/') != NULL)
 	{
-		if (strncmp(environ[i], "PATH=", 5) == 0)
-			return (environ[i] + 5);
-	}
-	return (NULL);
-}
-
-/**
- * find_command_path - Finds a command in PATH
- * @command: Command name
- *
- * Return: Full command path or NULL
- */
-char *find_command_path(char *command)
-{
-	char *path, *copy, *dir, *full;
-
-	if (strchr(command, '/') != NULL)
-	{
-		if (access(command, X_OK) == 0)
-			return (strdup(command));
+		if (stat(cmd, &st) == 0)
+			return (_strdup(cmd));
 		return (NULL);
 	}
-
-	path = get_path();
-	if (path == NULL)
+	path_val = _getenv(info, "PATH");
+	if (path_val == NULL || *path_val == '\0')
 		return (NULL);
-
-	copy = strdup(path);
-	if (copy == NULL)
+	path_copy = _strdup(path_val);
+	if (path_copy == NULL)
 		return (NULL);
-
-	dir = strtok(copy, ":");
-	while (dir != NULL)
+	token = _strtok(path_copy, ":");
+	while (token != NULL)
 	{
-		full = malloc(strlen(dir) + strlen(command) + 2);
+		len = _strlen(token) + _strlen(cmd) + 2;
+		full = malloc(sizeof(char) * len);
 		if (full == NULL)
 		{
-			free(copy);
+			free(path_copy);
 			return (NULL);
 		}
-
-		sprintf(full, "%s/%s", dir, command);
-		if (access(full, X_OK) == 0)
+		_strcpy(full, token);
+		_strcat(full, "/");
+		_strcat(full, cmd);
+		if (stat(full, &st) == 0)
 		{
-			free(copy);
+			free(path_copy);
 			return (full);
 		}
-
 		free(full);
-		dir = strtok(NULL, ":");
+		token = _strtok(NULL, ":");
 	}
-
-	free(copy);
+	free(path_copy);
 	return (NULL);
 }
