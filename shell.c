@@ -160,6 +160,14 @@ int handle_command(char *input, char *line, int status)
 		return (status);
 	}
 
+	if (strcmp(token, "help") == 0)
+	{
+		token = strtok(NULL, " \t\n");
+		print_help(token);
+		free(command);
+		return (0);
+	}
+
 	for (i = 0; token != NULL; i++)
 	{
 		argv[i] = token;
