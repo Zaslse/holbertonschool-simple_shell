@@ -46,20 +46,60 @@ void print_env(void)
 }
 
 /**
+ * handle_command - Parses and executes one command
+ * @input: Command to parse
+ * @line: Original input line
+ * @status: Current shell status
+ *
+ * Return: Command status
+ */
+int handle_command(char *input, char *line, int status)
+{
+	char *token, *argv[100];
+	int i;
+
+	token = strtok(input, " \t\n");
+	if (token == NULL)
+		return (status);
+
+	if (strcmp(token, "exit") == 0)
+	{
+		free(line);
+		exit(status);
+	}
+	if (strcmp(token, "env") == 0)
+	{
+		print_env();
+		return (status);
+	}
+
+	for (i = 0; token != NULL; i++)
+	{
+		argv[i] = token;
+		token = strtok(NULL, " \t\n");
+	}
+	argv[i] = NULL;
+
+	return (execute_cmd(argv, line));
+}
+
+/**
  * main - Simple shell entry point
  *
  * Return: Always 0 (Success)
  */
 int main(void)
 {
-	char *line = NULL, *token, *argv[100];
+	char *line = NULL, *start, *p;
 	size_t len = 0;
-	int i, status = 0;
+	int status = 0;
+	char end;
 
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
 			printf("($) ");
+
 		if (getline(&line, &len, stdin) == -1)
 		{
 			free(line);
@@ -67,26 +107,25 @@ int main(void)
 				printf("\n");
 			exit(status);
 		}
-		token = strtok(line, " \t\n");
-		if (token == NULL)
-			continue;
-		if (strcmp(token, "exit") == 0)
+
+		start = line;
+		p = line;
+
+		while (1)
 		{
-			free(line);
-			exit(status);
+			if (*p == ';' || *p == '\0')
+			{
+				end = *p;
+				*p = '\0';
+				status = handle_command(start, line, status);
+
+				if (end == '\0')
+					break;
+
+				start = p + 1;
+			}
+			p++;
 		}
-		if (strcmp(token, "env") == 0)
-		{
-			print_env();
-			continue;
-		}
-		for (i = 0; token != NULL; i++)
-		{
-			argv[i] = token;
-			token = strtok(NULL, " \t\n");
-		}
-		argv[i] = NULL;
-		status = execute_cmd(argv, line);
 	}
 	return (status);
 }
