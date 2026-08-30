@@ -12,7 +12,8 @@ ssize_t _getline(char **lineptr, size_t *n, int fd)
 	static char buffer[BUFSIZE];
 	static ssize_t b_pos = 0;
 	static ssize_t b_size = 0;
-	ssize_t len = 0, i;
+	ssize_t len = 0;
+	size_t i;
 	char *new_buf;
 
 	if (lineptr == NULL || n == NULL)
@@ -24,8 +25,6 @@ ssize_t _getline(char **lineptr, size_t *n, int fd)
 		*lineptr = malloc(*n);
 		if (*lineptr == NULL)
 			return (-1);
-		for (i = 0; (size_t)i < *n; i++)
-			(*lineptr)[i] = '\0';
 	}
 
 	while (1)
@@ -53,9 +52,7 @@ ssize_t _getline(char **lineptr, size_t *n, int fd)
 				new_buf = malloc(*n);
 				if (new_buf == NULL)
 					return (-1);
-				for (i = 0; (size_t)i < *n; i++)
-					new_buf[i] = '\0';
-				for (i = 0; i < len; i++)
+				for (i = 0; i < (size_t)len; i++)
 					new_buf[i] = (*lineptr)[i];
 				free(*lineptr);
 				*lineptr = new_buf;

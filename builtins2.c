@@ -7,9 +7,13 @@
  */
 int builtin_cd(info_t *info)
 {
-	char *target, cwd[1024];
+	char *target, cwd[1024], pwd_buf[1024];
 	char *pwd = _getenv(info, "PWD");
 	char *oldpwd = _getenv(info, "OLDPWD");
+	int print_dir = 0;
+
+	if (pwd == NULL && getcwd(pwd_buf, sizeof(pwd_buf)) != NULL)
+		pwd = pwd_buf;
 
 	if (info->args[1] == NULL || _strcmp(info->args[1], "~") == 0)
 	{
@@ -20,23 +24,15 @@ int builtin_cd(info_t *info)
 	else if (_strcmp(info->args[1], "-") == 0)
 	{
 		if (oldpwd == NULL)
-		{
 			target = pwd;
-			if (pwd != NULL)
-			{
-				write(STDOUT_FILENO, pwd, _strlen(pwd));
-				write(STDOUT_FILENO, "\n", 1);
-			}
-		}
 		else
-		{
 			target = oldpwd;
-			write(STDOUT_FILENO, oldpwd, _strlen(oldpwd));
-			write(STDOUT_FILENO, "\n", 1);
-		}
+		print_dir = 1;
 	}
 	else
+	{
 		target = info->args[1];
+	}
 
 	if (target == NULL)
 		target = "/";
@@ -48,6 +44,12 @@ int builtin_cd(info_t *info)
 		write(STDERR_FILENO, "\n", 1);
 		info->status = 2;
 		return (1);
+	}
+
+	if (print_dir)
+	{
+		write(STDOUT_FILENO, target, _strlen(target));
+		write(STDOUT_FILENO, "\n", 1);
 	}
 
 	_setenv(info, "OLDPWD", pwd ? pwd : "");
