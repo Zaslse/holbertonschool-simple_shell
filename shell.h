@@ -11,11 +11,12 @@
 
 extern char **environ;
 
-int execute_cmd(char **argv, char *line);
+int execute_cmd(char **argv, char *line, char *command);
 void print_env(void);
 int handle_alias(char *input);
 char *find_alias(char *name, int *index);
 void free_aliases(void);
 char *expand_variables(char *input, int status);
+char *find_command_path(char *command);
 
 #endif /* SHELL_H */

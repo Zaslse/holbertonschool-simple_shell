@@ -4,20 +4,31 @@
  * execute_cmd - Executes the command using fork and execve
  * @argv: Array of parsed arguments
  * @line: The original input string
+ * @command: Parsed command string
  *
  * Return: The exit status of the executed command
  */
-int execute_cmd(char **argv, char *line)
+int execute_cmd(char **argv, char *line, char *command)
 {
 	pid_t child_pid;
 	int status = 0;
+	char *path;
+
+	path = find_command_path(argv[0]);
+	if (path == NULL)
+	{
+		fprintf(stderr, "./hsh: No such file or directory\n");
+		return (127);
+	}
 
 	child_pid = fork();
 	if (child_pid == 0)
 	{
-		if (execve(argv[0], argv, environ) == -1)
+		if (execve(path, argv, environ) == -1)
 		{
 			perror("./hsh");
+			free(path);
+			free(command);
 			free_aliases();
 			free(line);
 			exit(127);
@@ -26,9 +37,12 @@ int execute_cmd(char **argv, char *line)
 	else
 	{
 		wait(&status);
+		free(path);
+
 		if (WIFEXITED(status))
 			return (WEXITSTATUS(status));
 	}
+
 	return (0);
 }
 
@@ -120,6 +134,7 @@ int handle_command(char *input, char *line, int status)
 	p = expand_variables(command, status);
 	free(command);
 	command = p;
+
 	if (command == NULL)
 		return (status);
 
@@ -152,7 +167,7 @@ int handle_command(char *input, char *line, int status)
 	}
 	argv[i] = NULL;
 
-	result = execute_cmd(argv, line);
+	result = execute_cmd(argv, line, command);
 	free(command);
 
 	return (result);
