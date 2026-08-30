@@ -30,6 +30,7 @@ int execute_cmd(char **argv, char *line, char *command)
 			free(path);
 			free(command);
 			free_aliases();
+			history_free();
 			free(line);
 			exit(127);
 		}
@@ -147,6 +148,8 @@ int handle_command(char *input, char *line, int status)
 
 	if (strcmp(token, "exit") == 0)
 	{
+		history_save();
+		history_free();
 		free(command);
 		free_aliases();
 		free(line);
@@ -164,6 +167,13 @@ int handle_command(char *input, char *line, int status)
 	{
 		token = strtok(NULL, " \t\n");
 		print_help(token);
+		free(command);
+		return (0);
+	}
+
+	if (strcmp(token, "history") == 0)
+	{
+		history_print();
 		free(command);
 		return (0);
 	}
@@ -193,6 +203,8 @@ int main(void)
 	int status = 0, run = 1;
 	char operator = ';';
 
+	history_init();
+
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
@@ -200,6 +212,8 @@ int main(void)
 
 		if (getline(&line, &len, stdin) == -1)
 		{
+			history_save();
+			history_free();
 			free_aliases();
 			free(line);
 
@@ -209,6 +223,7 @@ int main(void)
 			exit(status);
 		}
 
+		history_add(line);
 		remove_comment(line);
 
 		start = line;
