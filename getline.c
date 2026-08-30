@@ -11,18 +11,22 @@ ssize_t _getline(char **lineptr, size_t *n, int fd)
 {
 	static char buf[BUFSIZE];
 	static ssize_t head = 0, tail = 0;
-	ssize_t len = 0, i;
+	ssize_t len = 0;
+	size_t i;
 	char *new_ptr;
 
-	if (!lineptr || !n)
+	if (lineptr == NULL || n == NULL)
 		return (-1);
-	if (!*lineptr || *n == 0)
+
+	if (*lineptr == NULL || *n == 0)
 	{
 		*n = BUFSIZE;
 		*lineptr = malloc(*n);
-		if (!*lineptr)
+		if (*lineptr == NULL)
 			return (-1);
+		(*lineptr)[0] = '\0';
 	}
+
 	while (1)
 	{
 		if (head >= tail)
@@ -39,15 +43,16 @@ ssize_t _getline(char **lineptr, size_t *n, int fd)
 			if (tail < 0)
 				return (-1);
 		}
+
 		while (head < tail)
 		{
 			if (len >= (ssize_t)(*n) - 1)
 			{
 				*n += BUFSIZE;
 				new_ptr = malloc(*n);
-				if (!new_ptr)
+				if (new_ptr == NULL)
 					return (-1);
-				for (i = 0; i < len; i++)
+				for (i = 0; i < (size_t)len; i++)
 					new_ptr[i] = (*lineptr)[i];
 				free(*lineptr);
 				*lineptr = new_ptr;

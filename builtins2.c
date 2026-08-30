@@ -12,23 +12,31 @@ int builtin_cd(info_t *info)
 	char *oldpwd = _getenv(info, "OLDPWD");
 	int print_path = 0;
 
-	if (!info->args[1] || _strcmp(info->args[1], "~") == 0)
+	if (info->args[1] == NULL || _strcmp(info->args[1], "~") == 0)
 	{
 		target = _getenv(info, "HOME");
-		if (!target)
+		if (target == NULL)
 			target = pwd;
 	}
 	else if (_strcmp(info->args[1], "-") == 0)
 	{
-		target = oldpwd ? oldpwd : pwd;
-		print_path = 1;
+		if (oldpwd == NULL)
+		{
+			target = pwd;
+			print_path = 1;
+		}
+		else
+		{
+			target = oldpwd;
+			print_path = 1;
+		}
 	}
 	else
 	{
 		target = info->args[1];
 	}
 
-	if (!target)
+	if (target == NULL)
 		target = "/";
 
 	if (chdir(target) == -1)
@@ -46,8 +54,12 @@ int builtin_cd(info_t *info)
 		write(STDOUT_FILENO, "\n", 1);
 	}
 
-	_setenv(info, "OLDPWD", pwd ? pwd : "");
-	if (getcwd(cwd, sizeof(cwd)))
+	if (pwd != NULL)
+		_setenv(info, "OLDPWD", pwd);
+	else if (getcwd(cwd, sizeof(cwd)) != NULL)
+		_setenv(info, "OLDPWD", cwd);
+
+	if (getcwd(cwd, sizeof(cwd)) != NULL)
 		_setenv(info, "PWD", cwd);
 
 	info->status = 0;
