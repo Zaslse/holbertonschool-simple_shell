@@ -19,10 +19,19 @@ int builtin_cd(info_t *info)
 	}
 	else if (_strcmp(info->args[1], "-") == 0)
 	{
-		target = oldpwd ? oldpwd : pwd;
-		if (target != NULL)
+		if (oldpwd == NULL)
 		{
-			write(STDOUT_FILENO, target, _strlen(target));
+			target = pwd;
+			if (pwd != NULL)
+			{
+				write(STDOUT_FILENO, pwd, _strlen(pwd));
+				write(STDOUT_FILENO, "\n", 1);
+			}
+		}
+		else
+		{
+			target = oldpwd;
+			write(STDOUT_FILENO, oldpwd, _strlen(oldpwd));
 			write(STDOUT_FILENO, "\n", 1);
 		}
 	}
@@ -41,14 +50,10 @@ int builtin_cd(info_t *info)
 		return (1);
 	}
 
-	if (pwd != NULL)
-		_setenv(info, "OLDPWD", pwd);
-	else if (getcwd(cwd, sizeof(cwd)) != NULL)
-		_setenv(info, "OLDPWD", cwd);
-
+	_setenv(info, "OLDPWD", pwd ? pwd : "");
 	if (getcwd(cwd, sizeof(cwd)) != NULL)
 		_setenv(info, "PWD", cwd);
-
+	
 	info->status = 0;
 	return (1);
 }
