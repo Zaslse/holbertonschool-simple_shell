@@ -54,7 +54,7 @@ void print_env(void)
  */
 char *expand_alias(char *input)
 {
-	char *command, *p, *value, *new;
+	char *command, *p, *value, *new, saved;
 	int count = 0;
 
 	command = strdup(input);
@@ -64,26 +64,31 @@ char *expand_alias(char *input)
 	while (count++ < 100)
 	{
 		p = command;
+
 		while (*p == ' ' || *p == '\t')
 			p++;
-		while (*p != ' ' && *p != '\t' && *p != '\n' && *p != '\0')
+
+		while (*p != ' ' && *p != '\t' &&
+		       *p != '\n' && *p != '\0')
 			p++;
 
-		if (*p != '\0')
-			*p = '\0';
-
+		saved = *p;
+		*p = '\0';
 		value = find_alias(command, NULL);
+		*p = saved;
+
 		if (value == NULL)
 			break;
 
-		new = malloc(strlen(value) + strlen(p + 1) + 2);
+		new = malloc(strlen(value) + strlen(p) + 1);
 		if (new == NULL)
 			break;
 
-		sprintf(new, "%s %s", value, p + 1);
+		sprintf(new, "%s%s", value, p);
 		free(command);
 		command = new;
 	}
+
 	return (command);
 }
 
@@ -112,6 +117,12 @@ int handle_command(char *input, char *line, int status)
 	if (command == NULL)
 		return (status);
 
+	p = expand_variables(command, status);
+	free(command);
+	command = p;
+	if (command == NULL)
+		return (status);
+
 	token = strtok(command, " \t\n");
 	if (token == NULL)
 	{
@@ -126,6 +137,7 @@ int handle_command(char *input, char *line, int status)
 		free(line);
 		exit(status);
 	}
+
 	if (strcmp(token, "env") == 0)
 	{
 		print_env();
@@ -139,8 +151,10 @@ int handle_command(char *input, char *line, int status)
 		token = strtok(NULL, " \t\n");
 	}
 	argv[i] = NULL;
+
 	result = execute_cmd(argv, line);
 	free(command);
+
 	return (result);
 }
 
@@ -165,8 +179,10 @@ int main(void)
 		{
 			free_aliases();
 			free(line);
+
 			if (isatty(STDIN_FILENO))
 				printf("\n");
+
 			exit(status);
 		}
 
@@ -204,5 +220,6 @@ int main(void)
 			p++;
 		}
 	}
+
 	return (status);
 }
