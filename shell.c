@@ -86,7 +86,7 @@ char *expand_alias(char *input)
 			p++;
 
 		while (*p != ' ' && *p != '\t' &&
-		       *p != '\n' && *p != '\0')
+			   *p != '\n' && *p != '\0')
 			p++;
 
 		saved = *p;
@@ -127,8 +127,8 @@ int handle_command(char *input, char *line, int status, int count)
 		p++;
 
 	if (strncmp(p, "alias", 5) == 0 &&
-	    (p[5] == '\0' || p[5] == '\n' ||
-	     p[5] == ' ' || p[5] == '\t'))
+		(p[5] == '\0' || p[5] == '\n' ||
+		 p[5] == ' ' || p[5] == '\t'))
 		return (handle_alias(p));
 
 	command = expand_alias(input);
@@ -260,9 +260,9 @@ int main(int argc, char **argv)
 		while (1)
 		{
 			if (*p == ';' ||
-			    (*p == '&' && *(p + 1) == '&') ||
-			    (*p == '|' && *(p + 1) == '|') ||
-			    *p == '\0')
+				(*p == '&' && *(p + 1) == '&') ||
+				(*p == '|' && *(p + 1) == '|') ||
+				*p == '\0')
 			{
 				char next = *p;
 
@@ -270,8 +270,8 @@ int main(int argc, char **argv)
 					*p = '\0';
 
 				run = (operator == ';' ||
-				       (operator == '&' && status == 0) ||
-				       (operator == '|' && status != 0));
+					   (operator == '&' && status == 0) ||
+					   (operator == '|' && status != 0));
 
 				if (run)
 					status = handle_command(start, line,

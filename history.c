@@ -45,7 +45,7 @@ void history_print(void)
 
 	for (i = 0; i < history_count; i++)
 		printf("%d %s\n", (history_first + i) % 4096,
-		       history_list[i]);
+			   history_list[i]);
 }
 
 /**

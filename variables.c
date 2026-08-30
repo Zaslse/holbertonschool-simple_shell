@@ -11,9 +11,9 @@ static int variable_name_length(char *name)
 	int length = 0;
 
 	while ((name[length] >= 'a' && name[length] <= 'z') ||
-	       (name[length] >= 'A' && name[length] <= 'Z') ||
-	       (name[length] >= '0' && name[length] <= '9') ||
-	       name[length] == '_')
+		   (name[length] >= 'A' && name[length] <= 'Z') ||
+		   (name[length] >= '0' && name[length] <= '9') ||
+		   name[length] == '_')
 		length++;
 
 	return (length);
@@ -33,7 +33,7 @@ static char *get_env_value(char *name, int length)
 	for (i = 0; environ[i] != NULL; i++)
 	{
 		if (strncmp(environ[i], name, length) == 0 &&
-		    environ[i][length] == '=')
+			environ[i][length] == '=')
 			return (environ[i] + length + 1);
 	}
 

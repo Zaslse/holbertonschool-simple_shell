@@ -11,7 +11,7 @@ void remove_comment(char *line)
 	for (i = 0; line[i] != '\0'; i++)
 	{
 		if (line[i] == '#' &&
-		    (i == 0 || line[i - 1] == ' ' || line[i - 1] == '\t'))
+			(i == 0 || line[i - 1] == ' ' || line[i - 1] == '\t'))
 		{
 			line[i] = '\0';
 			break;

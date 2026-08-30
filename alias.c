@@ -69,7 +69,7 @@ static char *next_alias(char **p, char **value)
 
 	name = *p;
 	while (**p != '=' && **p != ' ' && **p != '\t' &&
-	       **p != '\n' && **p != '\0')
+		   **p != '\n' && **p != '\0')
 		(*p)++;
 
 	if (**p != '=')
@@ -94,7 +94,7 @@ static char *next_alias(char **p, char **value)
 	else
 	{
 		while (**p != ' ' && **p != '\t' &&
-		       **p != '\n' && **p != '\0')
+			   **p != '\n' && **p != '\0')
 			(*p)++;
 	}
 
