@@ -9,57 +9,51 @@
  */
 ssize_t _getline(char **lineptr, size_t *n, int fd)
 {
-	static char buffer[BUFSIZE];
-	static ssize_t b_pos = 0;
-	static ssize_t b_size = 0;
-	ssize_t len = 0;
-	size_t i;
-	char *new_buf;
+	static char buf[BUFSIZE];
+	static ssize_t head = 0, tail = 0;
+	ssize_t len = 0, i;
+	char *new_ptr;
 
-	if (lineptr == NULL || n == NULL)
+	if (!lineptr || !n)
 		return (-1);
-
-	if (*lineptr == NULL || *n == 0)
+	if (!*lineptr || *n == 0)
 	{
 		*n = BUFSIZE;
 		*lineptr = malloc(*n);
-		if (*lineptr == NULL)
+		if (!*lineptr)
 			return (-1);
 	}
-
 	while (1)
 	{
-		if (b_pos >= b_size)
+		if (head >= tail)
 		{
-			b_size = read(fd, buffer, BUFSIZE);
-			b_pos = 0;
-			if (b_size == 0)
+			tail = read(fd, buf, BUFSIZE);
+			head = 0;
+			if (tail == 0)
 			{
 				if (len == 0)
 					return (-1);
 				(*lineptr)[len] = '\0';
 				return (len);
 			}
-			if (b_size < 0)
+			if (tail < 0)
 				return (-1);
 		}
-
-		while (b_pos < b_size)
+		while (head < tail)
 		{
 			if (len >= (ssize_t)(*n) - 1)
 			{
 				*n += BUFSIZE;
-				new_buf = malloc(*n);
-				if (new_buf == NULL)
+				new_ptr = malloc(*n);
+				if (!new_ptr)
 					return (-1);
-				for (i = 0; i < (size_t)len; i++)
-					new_buf[i] = (*lineptr)[i];
+				for (i = 0; i < len; i++)
+					new_ptr[i] = (*lineptr)[i];
 				free(*lineptr);
-				*lineptr = new_buf;
+				*lineptr = new_ptr;
 			}
-			(*lineptr)[len] = buffer[b_pos++];
-			len++;
-			if (buffer[b_pos - 1] == '\n')
+			(*lineptr)[len++] = buf[head++];
+			if (buf[head - 1] == '\n')
 			{
 				(*lineptr)[len] = '\0';
 				return (len);
